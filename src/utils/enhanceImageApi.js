@@ -1,10 +1,8 @@
 import axios from "axios";
+import { BACKEND_URL } from "./config";
 
-const API_KEY = "wx3kflq4bdryzxyrf"; // Replace with your actual API key
-const BASE_URL = "https://techhk.aoscdn.com/";
 const MAXIMUM_RETRIES = 20;
-console.log(API_KEY);
-
+console.log(BACKEND_URL);
 
 export const enhancedImageAPI = async (file) => {
     try {
@@ -17,34 +15,34 @@ export const enhancedImageAPI = async (file) => {
         return enhancedImageData;
     } catch (error) {
         console.log("Error enhancing image:", error.message);
+        throw error;
     }
 };
 
 const uploadImage = async (file) => {
     const formData = new FormData();
-    formData.append("image_file", file);
+    formData.append("image", file);
 
     const { data } = await axios.post(
-        `${BASE_URL}/api/tasks/visual/scale`,
+        `${BACKEND_URL}/api/enhance/upload`,
         formData,
         {
             headers: {
                 "Content-Type": "multipart/form-data",
-                "X-API-KEY": API_KEY,
             },
         }
     );
 
-    if (!data?.data?.task_id) {
+    if (!data?.taskId) {
         throw new Error("Failed to upload image! Task ID not found.");
     }
-    return data.data.task_id;
+    return data.taskId;
 };
 
 const PollForEnhancedImage = async (taskId, retries = 0) => {
     const result = await fetchEnhancedImage(taskId);
 
-    if (result.state === 4) {
+    if (result.status === "processing") {
         console.log(`Processing...(${retries}/${MAXIMUM_RETRIES})`);
 
         if (retries >= MAXIMUM_RETRIES) {
@@ -63,18 +61,14 @@ const PollForEnhancedImage = async (taskId, retries = 0) => {
 
 const fetchEnhancedImage = async (taskId) => {
     const { data } = await axios.get(
-        `${BASE_URL}/api/tasks/visual/scale/${taskId}`,
-        {
-            headers: {
-                "X-API-KEY": API_KEY,
-            },
-        }
+        `${BACKEND_URL}/api/enhance/status/${taskId}`
     );
-    if (!data?.data) {
+    
+    if (!data) {
         throw new Error("Failed to fetch enhanced image! Image not found.");
     }
 
-    return data.data;
+    return data;
 };
 
 // {status: 200, message: "success", data: {task_id: "187b1adc-b35f-46d7-8670-47f88f89fd73"}}

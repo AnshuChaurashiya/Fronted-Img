@@ -18,7 +18,7 @@ const LoginPage = () => {
     try {
       console.log('Attempting login with:', { email })
       
-      const response = await axios.post('http://localhost:3000/user/login', {
+      const response = await axios.post('https://mg-enhancer-backend.onrender.com/user/login', {
         email,
         password
       })
@@ -48,7 +48,7 @@ const LoginPage = () => {
         password
       }
       console.log('Attempting signup with:', { name, email })
-      const response = await axios.post('http://localhost:3000/user/register', newUser)
+      const response = await axios.post('https://mg-enhancer-backend.onrender.com/user/register', newUser)
 
       console.log('Signup response:', response.data)
       if(response.status === 201){
@@ -60,10 +60,18 @@ const LoginPage = () => {
         setpassword('')
         setUser(user)
         navigate('/Ehancer')
+      } else {
+        setError('Unexpected response from server. Please try again.')
       }
     } catch (error) {
-      console.error('Signup error:', error.response?.data || error.message)
-      setError(error.response?.data?.message || 'Registration failed. Please try again.')
+      console.error('Signup error:', error)
+      if (error.response) {
+        setError(error.response.data?.message || `Server error: ${error.response.status}`)
+      } else if (error.request) {
+        setError('No response from server. Please check your internet connection.')
+      } else {
+        setError('Error: ' + error.message)
+      }
     }
   }
 
